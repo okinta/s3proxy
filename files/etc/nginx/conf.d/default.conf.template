@@ -1,11 +1,18 @@
 server {
+    server_tokens                   off;
     listen                          8080;
 
     location / {
         proxy_pass_request_headers  off;
         proxy_pass                  https://$S3_BUCKET/;
         proxy_hide_header           Content-Encoding;
-        proxy_hide_header           Content-Length;
+        proxy_hide_header           Bucket;
+        proxy_hide_header           x-rgw-object-type;
+        proxy_hide_header           x-amz-request-id;
+        header_filter_by_lua_block {
+            ngx.header["content-length"] = nil
+            ngx.header["server"] = nil
+        }
         body_filter_by_lua_file     /usr/src/decompress.lua;
     }
 }
