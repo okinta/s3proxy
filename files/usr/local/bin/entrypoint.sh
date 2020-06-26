@@ -5,6 +5,13 @@ if [ -z "$S3_BUCKET" ]; then
     exit 1
 fi
 
+# Configure authentication if set
+export AUTH_BASIC=off
+if [ -n "$AUTH_KEY" ]; then
+    htpasswd -cb /etc/nginx/conf.d/.htpasswd nuget "$AUTH_KEY" &> /dev/null
+    AUTH_BASIC=nuget
+fi
+
 envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec "$@"

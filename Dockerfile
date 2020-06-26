@@ -7,9 +7,8 @@ RUN set -x \
     && luarocks install lua-zlib \
     && yum autoremove -y gcc zlib-devel \
     \
-    # Allow AUTH_KEY to be used as an environment variable
-    && sed -i '1s/^/env AUTH_KEY;/' \
-        /usr/local/openresty/nginx/conf/nginx.conf
+    # Install htpasswd for HTTP basic authentication
+    && yum install -y httpd-tools
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/bin/openresty", "-g", "daemon off;"]
