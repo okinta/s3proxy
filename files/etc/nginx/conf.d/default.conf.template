@@ -3,6 +3,8 @@ server {
     listen                          8080;
 
     location / {
+        access_by_lua_file          /usr/src/auth.lua;
+
         proxy_pass_request_headers  off;
         proxy_pass                  https://$S3_BUCKET/;
         proxy_hide_header           Content-Encoding;
