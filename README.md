@@ -5,8 +5,6 @@ A simple container that implements a proxy for S3.
 It automatically decompresses gzipped S3 content for clients that do not
 support gzip.
 
-(Currently only supports buckets that are public.)
-
 ## Development
 
 ### Build
@@ -16,12 +14,18 @@ support gzip.
 ### Run
 
     docker run \
-        -e S3_BUCKET=[BUCKET_URL] \
+        -e S3_BUCKET=[BUCKET_NAME] \
+        -e S3_BUCKET_URL=[BUCKET_URL] \
         -e AWS_ACCESS_KEY=[AWS_ACCESS_KEY] \
         -e AWS_SECRET_KEY=[AWS_SECRET_KEY] \
         -e AUTH_KEY=[AUTH_KEY] \
         -p 8080:8080 okinta/s3proxy
 
-Replace `[BUCKET_URL]` with the public address of your S3 bucket. Optionally,
-replace `[AUTH_KEY]` with a key that clients must send in order to authorize
-the request.
+Replace the following variables;
+
+* `[BUCKET_NAME]` with the name of your S3 bucket.
+* `[BUCKET_URL]` with the address of your S3 bucket.
+* `[AWS_ACCESS_KEY]` with the public key to use to access the S3 bucket.
+* `[AWS_SECRET_KEY]` with the private key to use to access the S3 bucket.
+* `[AUTH_KEY]` with a key that clients must send in order to authorize the
+request. This is optional.

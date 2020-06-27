@@ -6,12 +6,13 @@ server {
     auth_basic_user_file            /etc/nginx/conf.d/.htpasswd;
 
     location / {
-        set                         $s3_host $S3_BUCKET;
-        set                         $s3_uri $request_uri;
-        access_by_lua_file          /usr/src/s3_auth.lua;
+        set_by_lua_block $now       { return os.date('!%a, %d %b %Y %H:%M:%S +0000') }
+        set_by_lua_file             $signature /usr/src/s3_auth.lua
 
         proxy_pass_request_headers  off;
-        proxy_pass                  https://$S3_BUCKET/;
+        proxy_set_header            Date $now;
+        proxy_set_header            Authorization "AWS $AWS_ACCESS_KEY:$signature";
+        proxy_pass                  https://$S3_BUCKET_URL/;
         proxy_hide_header           Content-Encoding;
         proxy_hide_header           Bucket;
         proxy_hide_header           x-rgw-object-type;

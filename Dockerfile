@@ -13,8 +13,6 @@ RUN set -x \
     && yum install -y httpd-tools \
     \
     # Allow AWS settings to be used as environment variables
-    && sed -i '1s/^/env AWS_ACCESS_KEY;/' \
-        /usr/local/openresty/nginx/conf/nginx.conf \
     && sed -i '1s/^/env AWS_SECRET_KEY;/' \
         /usr/local/openresty/nginx/conf/nginx.conf \
     && sed -i '1s/^/env S3_BUCKET;/' \

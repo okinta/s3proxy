@@ -5,6 +5,11 @@ if [ -z "$S3_BUCKET" ]; then
     exit 1
 fi
 
+if [ -z "$S3_BUCKET_URL" ]; then
+    echo "Error: S3_BUCKET_URL environment variable must be set" >&2
+    exit 1
+fi
+
 if [ -z "$AWS_ACCESS_KEY" ]; then
     echo "Error: AWS_ACCESS_KEY environment variable must be set" >&2
     exit 1
@@ -22,7 +27,7 @@ if [ -n "$AUTH_KEY" ]; then
     AUTH_BASIC=nuget
 fi
 
-envsubst '$S3_BUCKET $AUTH_BASIC' \
+envsubst '$S3_BUCKET_URL $AWS_ACCESS_KEY $AUTH_BASIC' \
     < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec "$@"
