@@ -27,7 +27,7 @@ if [ -n "$AUTH_KEY" ]; then
     AUTH_BASIC=nuget
 fi
 
-envsubst '$S3_BUCKET_URL $AWS_ACCESS_KEY $AUTH_BASIC' \
+envsubst '$S3_BUCKET $S3_BUCKET_URL $AWS_ACCESS_KEY $AWS_SECRET_KEY $AUTH_BASIC' \
     < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec "$@"

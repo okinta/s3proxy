@@ -1,28 +1,30 @@
 server {
-    server_tokens                   off;
-    listen                          8080;
+    server_tokens                    off;
+    listen                           8080;
 
-    auth_basic                      $AUTH_BASIC;
-    auth_basic_user_file            /etc/nginx/conf.d/.htpasswd;
+    auth_basic                       $AUTH_BASIC;
+    auth_basic_user_file             /etc/nginx/conf.d/.htpasswd;
 
     location / {
-        set_by_lua_block $now       { return os.date('!%a, %d %b %Y %H:%M:%S +0000') }
-        set_by_lua_file             $signature /usr/src/s3_auth.lua
+        # Set Authorization to access private resource from S3
+        proxy_pass_request_headers   off;
+        set_by_lua_block $now        { return os.date('!%a, %d %b %Y %H:%M:%S +0000') }
+        set_hmac_sha1 $signature     $AWS_SECRET_KEY "GET\n\n\n$now\n/$S3_BUCKET$request_uri";
+        set_encode_base64 $signature $signature;
+        proxy_set_header             Date $now;
+        proxy_set_header             Authorization "AWS $AWS_ACCESS_KEY:$signature";
 
-        proxy_pass_request_headers  off;
-        proxy_set_header            Date $now;
-        proxy_set_header            Authorization "AWS $AWS_ACCESS_KEY:$signature";
-        proxy_pass                  https://$S3_BUCKET_URL/;
-        proxy_hide_header           Content-Encoding;
-        proxy_hide_header           Bucket;
-        proxy_hide_header           x-rgw-object-type;
-        proxy_hide_header           x-amz-request-id;
+        proxy_pass                   https://$S3_BUCKET_URL/;
+        proxy_hide_header            Content-Encoding;
+        proxy_hide_header            Bucket;
+        proxy_hide_header            x-rgw-object-type;
+        proxy_hide_header            x-amz-request-id;
 
         header_filter_by_lua_block {
             ngx.header["content-length"] = nil
             ngx.header["server"] = nil
         }
 
-        body_filter_by_lua_file     "/usr/src/decompress.lua";
+        body_filter_by_lua_file      "/usr/src/decompress.lua";
     }
 }
