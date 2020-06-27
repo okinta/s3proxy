@@ -6,16 +6,22 @@ server {
     auth_basic_user_file            /etc/nginx/conf.d/.htpasswd;
 
     location / {
+        set                         $s3_host $S3_BUCKET;
+        set                         $s3_uri $request_uri;
+        access_by_lua_file          /usr/src/s3_auth.lua;
+
         proxy_pass_request_headers  off;
         proxy_pass                  https://$S3_BUCKET/;
         proxy_hide_header           Content-Encoding;
         proxy_hide_header           Bucket;
         proxy_hide_header           x-rgw-object-type;
         proxy_hide_header           x-amz-request-id;
+
         header_filter_by_lua_block {
             ngx.header["content-length"] = nil
             ngx.header["server"] = nil
         }
-        body_filter_by_lua_file     /usr/src/decompress.lua;
+
+        body_filter_by_lua_file     "/usr/src/decompress.lua";
     }
 }

@@ -5,6 +5,16 @@ if [ -z "$S3_BUCKET" ]; then
     exit 1
 fi
 
+if [ -z "$AWS_ACCESS_KEY" ]; then
+    echo "Error: AWS_ACCESS_KEY environment variable must be set" >&2
+    exit 1
+fi
+
+if [ -z "$AWS_SECRET_KEY" ]; then
+    echo "Error: AWS_SECRET_KEY environment variable must be set" >&2
+    exit 1
+fi
+
 # Configure authentication if set
 export AUTH_BASIC=off
 if [ -n "$AUTH_KEY" ]; then
@@ -12,6 +22,7 @@ if [ -n "$AUTH_KEY" ]; then
     AUTH_BASIC=nuget
 fi
 
-envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+envsubst '$S3_BUCKET $AUTH_BASIC' \
+    < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec "$@"
