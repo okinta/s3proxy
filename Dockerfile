@@ -1,9 +1,9 @@
-FROM openresty/openresty:1.15.8.3-centos
+FROM openresty/openresty:1.21.4.1-centos-rpm
 
 RUN set -x \
     \
     # Install zlib so we can decompress files
-    && yum install -y gcc zlib zlib-devel \
+    && yum install -y gcc zlib zlib-devel git \
     && luarocks install lua-zlib \
     && yum autoremove -y gcc zlib-devel \
     \

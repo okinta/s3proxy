@@ -1,20 +1,39 @@
 server {
     server_tokens                    off;
     listen                           8080;
-
     auth_basic                       $AUTH_BASIC;
     auth_basic_user_file             /etc/nginx/conf.d/.htpasswd;
-
     location / {
         # Set Authorization to access private resource from S3
         proxy_pass_request_headers   off;
-        set_by_lua_block $now        { return os.date('!%a, %d %b %Y %H:%M:%S +0000') }
-        set_hmac_sha1 $signature     $AWS_SECRET_KEY "GET\n\n\n$now\n/$S3_BUCKET$request_uri";
-        set_encode_base64 $signature $signature;
-        proxy_set_header             Date $now;
-        proxy_set_header             Authorization "AWS $AWS_ACCESS_KEY:$signature";
-
-        proxy_pass                   https://$S3_BUCKET_URL/;
+        set_by_lua_block $now        { return os.date('!%Y%m%dT%H%M%SZ') }
+        set_by_lua_block $now_date   { return os.date('!%Y%m%d') }
+        set $xamzcontentsha256       'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+        set $canonical 'GET\n$request_uri\n\nhost:$S3_BUCKET.s3.$REGION.amazonaws.com\nx-amz-content-sha256:$xamzcontentsha256\nx-amz-date:$now\n\nhost;x-amz-content-sha256;x-amz-date\n$xamzcontentsha256';
+  set_by_lua_block $sign {
+        local resty_sha256 = require "resty.sha256"
+             local str = require "resty.string"
+             local sha256 = resty_sha256:new()
+             sha256:update(ngx.var.canonical)
+             local digest = sha256:final()
+             return str.to_hex(digest)
+          }
+        set $ksecret 'AWS4$AWS_SECRET_KEY';
+        set_hmac_sha256 $kdate $ksecret $now_date;
+        set_hmac_sha256 $kregion $kdate '$REGION';
+        set_hmac_sha256 $kservice $kregion 's3';
+        set_hmac_sha256 $ksigning $kservice 'aws4_request';
+        set_hmac_sha256 $signature $ksigning 'AWS4-HMAC-SHA256\n$now\n$now_date/$REGION/s3/aws4_request\n$sign';
+        set_by_lua_block $signatureauthorization {
+        local str = require "resty.string"
+             return str.to_hex(ngx.var.signature)
+                }
+# return 200 now:$now\n$canonical\n$sign\n$ksecret\n$kdate\n$kregion\n$kservice\n$ksigning\n$signature\n$signatureauthorization;
+        proxy_set_header             x-amz-date $now;
+        proxy_set_header             x-amz-content-sha256 $xamzcontentsha256;
+        proxy_set_header             Host "$S3_BUCKET.s3.$REGION.amazonaws.com";
+        proxy_set_header             Authorization 'AWS4-HMAC-SHA256 Credential=$AWS_ACCESS_KEY/$now_date/$REGION/s3/aws4_request, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=$signatureauthorization';
+        proxy_pass                   https://$S3_BUCKET.s3.$REGION.amazonaws.com/;
         proxy_hide_header            Content-Encoding;
         proxy_hide_header            Bucket;
         proxy_hide_header            x-rgw-object-type;
@@ -25,6 +44,6 @@ server {
             ngx.header["server"] = nil
         }
 
-        body_filter_by_lua_file      "/usr/src/decompress.lua";
+        # body_filter_by_lua_file      "/usr/src/decompress.lua";
     }
 }
