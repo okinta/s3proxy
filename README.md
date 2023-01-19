@@ -1,4 +1,5 @@
-# S3 Proxy
+# S3 Proxy 
+### [Docker Images](https://hub.docker.com/r/taylord0ng/s3proxy)
 
 A simple container that implements a proxy for S3.
 
@@ -9,7 +10,7 @@ support gzip.
 
 ### Build
 
-    docker build -t taylord0ng/s3proxy .
+    docker build -t s3proxy .
 
 ### Run
 
@@ -19,7 +20,7 @@ support gzip.
         -e AWS_ACCESS_KEY=[AWS_ACCESS_KEY] \
         -e AWS_SECRET_KEY=[AWS_SECRET_KEY] \
         -e AUTH_KEY=[AUTH_KEY] \
-        -p 8080:8080 okinta/s3proxy
+        -p 8080:8080 s3proxy
 
 Replace the following variables;
 
